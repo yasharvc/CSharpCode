@@ -1,0 +1,8 @@
+using System;
+
+namespace yashar{
+	public class fx
+	{
+		public int Age{get;set;}
+	}
+}
