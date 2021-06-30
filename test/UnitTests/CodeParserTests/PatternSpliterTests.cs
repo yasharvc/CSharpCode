@@ -1,7 +1,5 @@
 ﻿using CodeParser;
 using Shouldly;
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -20,9 +18,10 @@ namespace UnitTests.CodeParserTests
 
             var res = await spliter.Process(code, 0);
 
-            res.Item2.ShouldBeGreaterThan(0);
+            res.Item2.ShouldBeGreaterThan(2);
             res.Item1.Count.ShouldBeGreaterThan(1);
             Assert.Contains(res.Item1["using"], x => x.Contains("using System;"));
+            Assert.Contains(res.Item1["namespace"], x => x.Contains("namespace"));
         }
 
         private async Task<string> ReadResourceAsync(string fileName)
