@@ -1,8 +1,14 @@
 using System;
+using dt = System.DateTime;
 
-namespace yashar{
+namespace yashar
+{
 	public class fx
 	{
 		public int Age{get;set;}
+
+		void fx(){
+			var x = "} this is a big test }";
+		}
 	}
 }
