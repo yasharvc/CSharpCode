@@ -87,6 +87,51 @@ namespace UnitTests.CodeParserTests
             await Assert.ThrowsAsync<FormatException>(async () => await spliter.Process(code, 0));
         }
 
+        [Fact]
+        public async void Should_Throw_Exception_For_Not_Matched_ArrayPattern()
+        {
+            var code = "var i = 100;";
+            var spliter = new PatternSpliter("`@,|()`->{params}");
+
+            await Assert.ThrowsAsync<FormatException>(async () => await spliter.Process(code, 0));
+        }
+
+        [Fact]
+        public async void Should_Get_Items_for_Array_With_ArrayPattern()
+        {
+            var code = "[100,'233',03294]";
+            var spliter = new PatternSpliter("`@,|[]`->{params}");
+
+            var res = await spliter.Process(code, 0);
+
+            res.Item2.ShouldBeGreaterThan(3);
+            res.Item1.Count.ShouldBe(1);
+            Assert.Contains(res.Item1["params"], x => x.Contains("100"));
+            Assert.Contains(res.Item1["params"], x => x.Contains("'233'"));
+            Assert.Contains(res.Item1["params"], x => x.Contains("03294"));
+        }
+
+        [Fact]
+        public async void Should_Get_Items_for_Array_With_ArrayPattern_Ignore_NewLine()
+        {
+            var code = 
+                @"[100,
+'233',
+03294,
+""Yashar,"",190]";
+            var spliter = new PatternSpliter("`@,|[]`->{params}");
+
+            var res = await spliter.Process(code, 0);
+
+            res.Item2.ShouldBeGreaterThan(3);
+            res.Item1.Count.ShouldBe(1);
+            Assert.Contains(res.Item1["params"], x => x.Contains("100"));
+            Assert.Contains(res.Item1["params"], x => x.Contains("'233'"));
+            Assert.Contains(res.Item1["params"], x => x.Contains("03294"));
+            Assert.Contains(res.Item1["params"], x => x.Contains("\"Yashar,\""));
+            Assert.Contains(res.Item1["params"], x => x.Contains("190"));
+        }
+
         private async Task<string> ReadResourceAsync(string fileName)
         {
             var asm = GetType().Assembly;
