@@ -60,11 +60,21 @@ namespace CodeParser
         {
             if (part.Pattern.StartsWith("|"))
                 pos = await UntilPatternAsync(code, pos, items, part);
+            else if (part.Pattern.StartsWith('@'))
+                pos = await ArrayPatternAsync(code, pos, items, part);
             else if (part.Pattern.Length == 3)
                 pos = await BalancedOpenCloseCharactrersAsync(code, pos, items, part);
             else
                 pos = await ExactWordPatternAsync(code, pos, items, part);
 
+            return pos;
+        }
+
+        private static async Task<int> ArrayPatternAsync(string code, int pos, Dictionary<string, List<string>> items, PatternPart part)
+        {
+            var result = await new ArrayPattern { ArrayStartChar = part.Pattern[3], ArrayEndChar = part.Pattern[4], SplitterChar = part.Pattern[1] }.Compile(code[pos..]);
+            items[part.Name] = result.Item1;
+            pos += result.Item2;
             return pos;
         }
 
@@ -194,7 +204,7 @@ namespace CodeParser
                 for (int i = 0; i < code.Length; i++)
                 {
                     var ch = code[i];
-                    if(ch == '"' && (i > 0 && code[i-1] != '\\'))
+                    if ((ch == '"' && i == 0) || (ch == '"' && i > 0 && code[i - 1] != '\\'))
                         insideString = !insideString;
 
                     if (insideString)
@@ -210,6 +220,73 @@ namespace CodeParser
 
                     if (cnt == 0 && findedFirstChar)
                         return i + 1;
+                }
+                return code.Length;
+            }
+        }
+
+        class ArrayPattern
+        {
+            public char SplitterChar { get; set; }
+            public char ArrayEndChar { get; set; }
+            public char ArrayStartChar { get; set; }
+            public async Task<Tuple<List<string>, int>> Compile(string code) => await ArraySplit(code);
+
+            private Task<Tuple<List<string>, int>> ArraySplit(string code)
+            {
+                var res = new List<string>();
+                var pos = code.IndexOf(ArrayEndChar);
+                if (pos >= 0)
+                {
+                    if (pos == 0)
+                        return Task.FromResult(new Tuple<List<string>, int>(res, 1));
+
+                    pos = code.IndexOf(ArrayStartChar) + 1;
+                    if (pos == 0)
+                        throw new Exception("Input is in Wrong format");
+                    var temp = -1;
+                    while (temp != pos || !(pos == -1 || pos == code.Length))
+                    {
+                        var c = code[pos..];
+                        temp = pos;
+                        pos += GetNextElement(c, res);
+                    }
+                }
+                else
+                {
+                    pos = code.Length;
+                }
+                return Task.FromResult(new Tuple<List<string>, int>(res, pos));
+            }
+
+            private int GetNextElement(string code, List<string> res)
+            {
+                var insideString = false;
+
+                var temp = "";
+                for (int i = 0; i < code.Length; i++)
+                {
+                    var ch = code[i];
+                    temp += ch;
+                    if ((ch == '"' && i == 0) || (ch == '"' && i > 0 && code[i - 1] != '\\'))
+                        insideString = !insideString;
+
+                    if (insideString)
+                        continue;
+
+                    if (ch == SplitterChar)
+                    {
+                        res.Add(temp[0..^1]);
+                        return i + 1;
+                    }
+
+                    if(ch == ArrayEndChar)
+                    {
+                        var value = temp[0..^1];
+                        if(value.Length > 0)
+                            res.Add(value);
+                        return i + 1;
+                    }
                 }
                 return code.Length;
             }

@@ -62,17 +62,32 @@ namespace UnitTests.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to using System;
+        ///using dt = System.DateTime;
         ///
-        ///namespace yashar{
+        ///namespace yashar
+        ///{
         ///	public class fx
         ///	{
         ///		public int Age{get;set;}
+        ///
+        ///		void fx(){
+        ///			var x = &quot;} this is a big test }&quot;;
+        ///		}
         ///	}
         ///}.
         /// </summary>
         internal static string namespace1 {
             get {
                 return ResourceManager.GetString("namespace1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to function fx(a,c).
+        /// </summary>
+        internal static string UntilOr {
+            get {
+                return ResourceManager.GetString("UntilOr", resourceCulture);
             }
         }
     }

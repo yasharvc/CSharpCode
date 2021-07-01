@@ -37,6 +37,36 @@ namespace UnitTests.CodeParserTests
             Assert.Contains(res.Item1["namespace"], x => x.Contains("namespace"));
             Assert.Contains(res.Item1.Keys, x => x.Equals("name"));
         }
+        [Fact]
+        public async void Should_Extract_All_Parameters()
+        {
+            var code = await ReadResourceAsync("UntilOr.txt");
+            var spliter = new PatternSpliter("`function`->{function}`|`(``->{name}`@,|()`->{params}");
+
+            var res = await spliter.Process(code, 0);
+
+            res.Item2.ShouldBeGreaterThan(3);
+            res.Item1.Count.ShouldBeGreaterThan(1);
+            Assert.Contains(res.Item1["function"], x => x.Contains("function"));
+            Assert.Contains(res.Item1["name"], x => x.Contains("fx"));
+            Assert.Contains(res.Item1["params"], x => x.Equals("int a"));
+            Assert.Contains(res.Item1["params"], x => x.Contains("string c"));
+        }
+
+        [Fact]
+        public async void Should_Extract_All_Parameters_Ignore_String()
+        {
+            var code = "Yashar(\",\",123)";
+            var spliter = new PatternSpliter("`|`(``->{name}`@,|()`->{params}");
+
+            var res = await spliter.Process(code, 0);
+
+            res.Item2.ShouldBeGreaterThan(3);
+            res.Item1.Count.ShouldBeGreaterThan(1);
+            Assert.Contains(res.Item1["name"], x => x.Contains("Yashar"));
+            Assert.Contains(res.Item1["params"], x => x.Contains("\",\""));
+            Assert.Contains(res.Item1["params"], x => x.Contains("123"));
+        }
 
         private async Task<string> ReadResourceAsync(string fileName)
         {
