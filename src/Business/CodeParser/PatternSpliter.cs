@@ -135,8 +135,9 @@ namespace CodeParser
                     res.Add(code.Substring(0, pos));
                 else
                 {
-                    res.Add(code);
-                    pos = code.Length;
+                    throw new FormatException();
+                    //res.Add(code);
+                    //pos = code.Length;
                 }
                 return Task.FromResult(new Tuple<List<string>, int>(res,pos));
             }

@@ -1,5 +1,6 @@
 ﻿using CodeParser;
 using Shouldly;
+using System;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -66,6 +67,15 @@ namespace UnitTests.CodeParserTests
             Assert.Contains(res.Item1["name"], x => x.Contains("Yashar"));
             Assert.Contains(res.Item1["params"], x => x.Contains("\",\""));
             Assert.Contains(res.Item1["params"], x => x.Contains("123"));
+        }
+
+        [Fact]
+        public async void Should_Throw_Exception_For_Not_Matched()
+        {
+            var code = "function fx(int a,int b)";
+            var spliter = new PatternSpliter("`|`namespace``->{using}`namespace`->{namespace}`|`{``->{name}`{_}`->{body}");
+
+            await Assert.ThrowsAsync<FormatException>(async () => await spliter.Process(code, 0));
         }
 
         private async Task<string> ReadResourceAsync(string fileName)
