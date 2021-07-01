@@ -1,4 +1,5 @@
-﻿using Helper;
+﻿using CodeParser.Patterns;
+using Helper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace CodeParser
 {
-    public class PatternSpliter
+    public partial class PatternSpliter
     {
         public string Pattern { get; }
         List<PatternPart> Parts { get; } = new List<PatternPart>();
@@ -111,61 +112,6 @@ namespace CodeParser
             {
                 Pattern = patternExpr.GetFromTo("`", "`->{")[1..];
                 Name = patternExpr.GetFromTo("`->{", "}").Replace("`->{", "").Replace("}", "");
-            }
-        }
-
-        class UntilPattern
-        {
-            public string EndPhrase { get; set; }
-            const string NotAllowedInsideThisChars = "\"\'";
-
-            public async Task<Tuple<List<string>, int>> Compile(string code)
-            {
-                if (EndPhrase.StartsWith('`'))
-                    return await UntilLiteral(code, EndPhrase);
-                return new Tuple<List<string>, int>(new List<string>(), 0);
-            }
-
-            private Task<Tuple<List<string>,int>> UntilLiteral(string code, string endPhrase)
-            {
-                var res = new List<string>();
-                endPhrase = endPhrase.Replace("`", "");
-                var pos = code.IndexOf(endPhrase);
-                if (pos > 0)
-                    res.Add(code.Substring(0, pos));
-                else
-                {
-                    throw new FormatException();
-                    //res.Add(code);
-                    //pos = code.Length;
-                }
-                return Task.FromResult(new Tuple<List<string>, int>(res,pos));
-            }
-        }
-
-        class ExactWordPattern
-        {
-            public string EndPhrase { get; set; }
-            const string NotAllowedInsideThisChars = "\"\'";
-
-            public async Task<Tuple<List<string>, int>> Compile(string code) => await ExactWord(code, EndPhrase);
-
-            private Task<Tuple<List<string>, int>> ExactWord(string code, string endPhrase)
-            {
-                var res = new List<string>();
-                endPhrase = endPhrase.Replace("`", "");
-                var pos = code.IndexOf(endPhrase);
-                if (pos == 0)
-                {
-                    res.Add(code.Substring(0, endPhrase.Length));
-                    pos = endPhrase.Length;
-                }
-                else
-                {
-                    res.Add(code);
-                    pos = code.Length;
-                }
-                return Task.FromResult(new Tuple<List<string>, int>(res, pos));
             }
         }
 

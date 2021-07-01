@@ -70,10 +70,19 @@ namespace UnitTests.CodeParserTests
         }
 
         [Fact]
-        public async void Should_Throw_Exception_For_Not_Matched()
+        public async void Should_Throw_Exception_For_Not_Matched_UntilPattern()
         {
             var code = "function fx(int a,int b)";
             var spliter = new PatternSpliter("`|`namespace``->{using}`namespace`->{namespace}`|`{``->{name}`{_}`->{body}");
+
+            await Assert.ThrowsAsync<FormatException>(async () => await spliter.Process(code, 0));
+        }
+
+        [Fact]
+        public async void Should_Throw_Exception_For_Not_Matched_ExactWordPattern()
+        {
+            var code = "function fx(int a,int b)";
+            var spliter = new PatternSpliter("`namespace`->{using}`{_}`->{body}");
 
             await Assert.ThrowsAsync<FormatException>(async () => await spliter.Process(code, 0));
         }
