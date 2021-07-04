@@ -5,6 +5,9 @@ namespace yashar
 {
 	public class fx
 	{
+		internal fx(){
+			Age = 150;
+		}
 		public int Age{get;set;}
 
 		void fx(){

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace CodeParser
+namespace CodeParser.Patterns
 {
     class ArrayPattern
     {
