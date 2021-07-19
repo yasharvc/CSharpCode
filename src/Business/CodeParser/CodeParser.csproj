@@ -5,10 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Models\Blocks\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Helper\Helper.csproj" />
   </ItemGroup>
 

@@ -200,9 +200,10 @@ namespace UnitTests.CodeParserTests
             return 0;
         }
 
-        private async Task<string> ReadResourceAsync(string fileName)
+        public static async Task<string> ReadResourceAsync(string fileName)
         {
-            var asm = GetType().Assembly;
+            var type = new PatternSpliterTests().GetType();
+            var asm = type.Assembly;
             var fullName = asm.GetManifestResourceNames().SingleOrDefault(m => m.EndsWith(fileName));
             if (string.IsNullOrEmpty(fullName))
                 return "";

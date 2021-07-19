@@ -12,14 +12,73 @@ namespace UnitTests.CodeParserTests
     public class ParseWithWordSplitTests
     {
         [Fact]
-        public async void Should_Get_Next_Word()
+        public void Should_Get_Next_Word()
         {
             var processor = new ParseWithWordSplit();
-            var code = "fx(\"This is a big Test\",11)";
+            var code = "My  name";
 
-            var a = processor.NextWord(code);
+            var firstWord = processor.NextWord(code);
+            var secondWord = processor.NextWord(code, firstWord.End);
 
-            a.ShouldBe(fx)
+            firstWord.RawPhrase.ShouldBe("My");
+            firstWord.Start.ShouldBe(0);
+            firstWord.WhiteSpaceAfter.ShouldBe("  ");
+            firstWord.IsEmpty.ShouldBeFalse();
+            firstWord.End.ShouldBe(4);
+        }
+
+        [Fact]
+        public void Should_Get_Function_Name_And_Parameters()
+        {
+            var processor = new ParseWithWordSplit();
+            var code = "func(1,\r\n\"ab,c)d,sjfh,gfdg f,dgd\")";
+
+            var firstWord = processor.NextWord(code, stopChars: "({");
+            var secondWord = processor.NextWord(code, firstWord.End, stopChars: ",)");
+            var thirdWord = processor.NextWord(code, secondWord.End, stopChars: ",)");
+
+            firstWord.RawPhrase.ShouldBe("func");
+            firstWord.Start.ShouldBe(0);
+            firstWord.WhiteSpaceAfter.ShouldBe("(");
+            firstWord.IsEmpty.ShouldBeFalse();
+
+            secondWord.RawPhrase.ShouldBe("1");
+            thirdWord.RawPhrase.ShouldBe("\"ab,c)d,sjfh,gfdg f,dgd\"");
+        }
+
+
+        [Fact]
+        public void Should_Get_Lambda()
+        {
+            var processor = new ParseWithWordSplit();
+            var code = "func((X)=>{X++;})";
+
+            var firstWord = processor.NextWord(code, stopChars: "({");
+            var secondWord = processor.NextWord(code, firstWord.End, stopChars: ",)");
+
+            firstWord.RawPhrase.ShouldBe("func");
+            firstWord.Start.ShouldBe(0);
+            firstWord.WhiteSpaceAfter.ShouldBe("(");
+            firstWord.IsEmpty.ShouldBeFalse();
+
+            secondWord.RawPhrase.ShouldBe("1");
+        }
+
+        [Fact]
+        public async void Should_Get_Using()
+        {
+            var processor = new ParseWithWordSplit();
+            var code = await PatternSpliterTests.ReadResourceAsync("namespace1.txt");
+
+            var firstWord = processor.NextWord(code);
+            var secondWord = processor.NextWord(code, firstWord.End, stopChars: ";");
+
+            firstWord.RawPhrase.ShouldBe("using");
+            firstWord.Start.ShouldBe(0);
+            firstWord.WhiteSpaceAfter.ShouldBe(" ");
+            firstWord.IsEmpty.ShouldBeFalse();
+
+            secondWord.RawPhrase.ShouldBe("System");
         }
     }
 }

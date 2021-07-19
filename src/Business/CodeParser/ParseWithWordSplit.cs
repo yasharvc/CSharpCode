@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using CodeParser.Models;
 
 namespace CodeParser
 {
@@ -18,8 +14,15 @@ namespace CodeParser
         public const string BalanceableCharacters = "{}()[]";
         public const string ParameterSeparator = ",";
 
-        public string NextWord(string code, string whtiteSpaces = WhiteSpaces)
+        public TextWithPosition NextWord(string code, int startPos = 0, string whtiteSpaces = WhiteSpaces, string stopChars = "")
         {
+            startPos = startPos < 0 ? 0 : startPos > code.Length ? code.Length : startPos;
+
+            var res = new TextWithPosition
+            {
+                Start = startPos
+            };
+
             var temp = "";
             var isInsideSring = false;
             var stringStartedWith = '\0';
@@ -30,19 +33,49 @@ namespace CodeParser
                 balanceCheckArray[i] = 0;
             }
 
-            for (int i = 0; i < code.Length; i++)
+            for (int i = startPos; i < code.Length; i++)
             {
                 var ch = code[i];
                 temp += ch;
+
+                if(!isInsideSring && stopChars.Contains(ch))
+                {
+                    res.RawPhrase = temp[..^1];
+                    temp = $"{ch}";
+                    for (int j = i + 1; j < code.Length; j++)
+                    {
+                        var c = code[j];
+                        if (IsWhiteSpace(c))
+                            temp += c;
+                        else
+                            break;
+                    }
+                    res.WhiteSpaceAfter = temp;
+                    return res;
+                }
 
                 if (StringCheck(code, ref isInsideSring, ref stringStartedWith, i, ch) ||
                     !BalancedChars(ch, balanceCheckArray))
                     continue;
 
-                if (IsWhiteSpace(ch))
-                    return temp[..^1];
+                if (IsWhiteSpace(ch) || stopChars.Contains(ch))
+                {
+                    res.RawPhrase = temp[..^1];
+                    temp = $"{ch}";
+                    for (int j = i + 1; j < code.Length; j++)
+                    {
+                        var c = code[j];
+                        if (IsWhiteSpace(c))
+                            temp += c;
+                        else
+                            break;
+                    }
+                    res.WhiteSpaceAfter = temp;
+                    return res;
+                }
             }
-            return temp;
+            res.RawPhrase = temp;
+            return res;
         }
 
         private bool IsWhiteSpace(char ch) => WhiteSpaces.Contains(ch);
@@ -50,9 +83,10 @@ namespace CodeParser
         private bool BalancedChars(char ch, int[] balanceCheckArray)
         {
             var index = BalanceableCharacters.IndexOf(ch);
-            if (index == -1 && AllBalanced(balanceCheckArray))
+            if(index != -1)
+                balanceCheckArray[index]++;
+            else if (AllBalanced(balanceCheckArray))
                 return true;
-            balanceCheckArray[index]++;
             return false;
         }
 
@@ -84,7 +118,7 @@ namespace CodeParser
                 return false;
             }
 
-            return true;
+            return isInsideSring;
         }
 
         private static bool IsGoingIntoString(bool isInsideSring, char ch, char? charBefore) 
