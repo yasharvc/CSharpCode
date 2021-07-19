@@ -2,6 +2,7 @@
 using CodeParser.Models.Blocks;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace CodeParser.BlockParser
@@ -21,7 +22,7 @@ namespace CodeParser.BlockParser
                 while(pos >= 0)
                     pos = ParseNextUsing(code, list, pos);
 
-                return Task.FromResult(new ParseResult<UsingBlock> { Blocks = list, FinishPosition = pos, SartPosition = pos });
+                return Task.FromResult(new ParseResult<UsingBlock> { Blocks = list, FinishPosition = list.Last().Text.End, SartPosition = startPos });
             }
             catch (FormatException)
             {
@@ -34,7 +35,7 @@ namespace CodeParser.BlockParser
             var usingKeyword = GoUntilUsingKeyword(code, pos);
             if (usingKeyword.IsEmpty || usingKeyword.RawPhrase.Trim() != "using")
                 return -1;
-            var wordAfterUsing = parseWithWordSplit.NextWord(code, usingKeyword.End, stopChars: ";");
+            var wordAfterUsing = parseWithWordSplit.NextWord(code, usingKeyword.End, stopChars: ";=");
             UsingBlock item = null;
             if (wordAfterUsing == "static")
             {
@@ -44,7 +45,7 @@ namespace CodeParser.BlockParser
             {
                 item = GetUsingType(code, usingKeyword, wordAfterUsing);
             }
-            else if(wordAfterUsing.RawPhrase.Contains("="))
+            else
             {
                 wordAfterUsing = parseWithWordSplit.NextWord(code, usingKeyword.End, stopChars: "=");
                 item = GetAliasType(code, usingKeyword, wordAfterUsing);
@@ -56,7 +57,9 @@ namespace CodeParser.BlockParser
 
         private UsingBlock GetAliasType(string code, TextWithPosition usingKeyword, TextWithPosition wordAfterUsing)
         {
-            var lib = parseWithWordSplit.NextWord(code, wordAfterUsing.End, stopChars: ";");
+            var lib = parseWithWordSplit.NextWord(code, code.IndexOf("=", wordAfterUsing.Start) + 1, stopChars: ";");
+            while (lib.IsEmpty)
+                lib = parseWithWordSplit.NextWord(code, lib.End, stopChars: ";");
             return new UsingBlock
             {
                 Type = UsingBlockType.UseAliasType,

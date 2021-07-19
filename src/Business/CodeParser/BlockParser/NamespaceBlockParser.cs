@@ -18,14 +18,16 @@ namespace CodeParser.BlockParser
             };
 
             var pos = startPos;
-            pos = await GetUsings(code, res, pos);
+            await GetUsings(code, res, pos);
 
-            pos = code.IndexOf("namespace", pos);
+            pos = code.IndexOf("namespace", startPos);
             if (pos == -1)
                 return ParseResult<NamespaceBlock>.Empty(startPos);
 
             pos += "namespace".Length;
             var name = parseWithWordSplit.NextWord(code, pos, stopChars: "{");
+            while (name.IsEmpty)
+                name = parseWithWordSplit.NextWord(code, name.End, stopChars: "{");
             res.Name = name;
 
             var blocks = await new BalancedOpenCloseCharactrers { CloseChar = '}', OpenChar = '{' }.Compile(code);
