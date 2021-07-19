@@ -4,7 +4,8 @@ namespace CodeParser.Models.Blocks
 {
     public class NamespaceBlock
     {
-        public string Name { get; set; }
+        public TextWithPosition Name { get; set; }
+        public TextWithPosition Body { get; set; }
         public List<UsingBlock> Usings { get; set; }
         public List<ClassBlock> Classes { get; set; }
         public List<DelegateBlock> Delegates { get; set; }

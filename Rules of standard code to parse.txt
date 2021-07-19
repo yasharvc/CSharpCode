@@ -1,0 +1,5 @@
+1. No code out of namespace except Usings
+2. At least one namespace
+3. To have just one and one type inside namespace (class/struct/enum...) [optional but good practice]
+4. Don't use namespace without block (C# 10)!!!
+5. One file / One namespace please

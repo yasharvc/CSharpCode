@@ -17,7 +17,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeParser", "src\Business\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleApp", "src\Apps\ConsoleApp\ConsoleApp.csproj", "{08589FBA-0F52-429F-B999-CC0CDE5C84DA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Helper", "src\Business\Helper\Helper.csproj", "{0B9E4E1D-BD51-4DC9-864A-AD0441FACD6E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Helper", "src\Business\Helper\Helper.csproj", "{0B9E4E1D-BD51-4DC9-864A-AD0441FACD6E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DF43E6D3-6670-48BE-8371-9C52788A24C6}"
+	ProjectSection(SolutionItems) = preProject
+		Rules of standard code to parse.txt = Rules of standard code to parse.txt
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

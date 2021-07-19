@@ -70,5 +70,29 @@ namespace UnitTests.BlockParserTests
             x.Blocks.First().Library.ShouldBe("System.Data.DateTable");
             x.Blocks.First().VariableName.ShouldBe("dt");
         }
+        [Fact]
+        public async void Should_Parse_AllUsings()
+        {
+            var code = 
+@"
+using System;
+using dt= System.Data.DateTable;
+using static System.Console;
+
+namespace fx{
+    public class cls
+    {
+    }
+}
+";
+            var parser = new UsingBlockParser();
+
+            var x = await parser.Parse(code);
+
+            x.Blocks.Count().ShouldBe(3);
+            x.Blocks.First().Type.ShouldBe(UsingBlockType.UseType);
+            x.Blocks.ElementAt(1).Type.ShouldBe(UsingBlockType.UseAliasType);
+            x.Blocks.ElementAt(2).Type.ShouldBe(UsingBlockType.UseStaticType);
+        }
     }
 }
