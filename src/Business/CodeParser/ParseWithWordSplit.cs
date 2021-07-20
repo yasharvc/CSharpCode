@@ -29,6 +29,7 @@ namespace CodeParser
             var isInsideSring = false;
             var stringStartedWith = '\0';
             var balanceCheckArray = new int[BalanceableCharacters.Length];
+            var wasInBalancing = false;
 
             for (int i = 0; i < balanceCheckArray.Length; i++)
             {
@@ -40,7 +41,7 @@ namespace CodeParser
                 var ch = code[i];
                 temp += ch;
 
-                if(!isInsideSring && stopChars.Contains(ch))
+                if(!isInsideSring && stopChars.Contains(ch) && !wasInBalancing)
                 {
                     res.RawPhrase = temp[..^1];
                     temp = $"{ch}";
@@ -57,8 +58,13 @@ namespace CodeParser
                 }
 
                 if (StringCheck(code, ref isInsideSring, ref stringStartedWith, i, ch) ||
-                    !BalancedChars(ch, balanceCheckArray))
+                    !BalancedChars(ch, balanceCheckArray, ref wasInBalancing))
                     continue;
+
+                if (wasInBalancing)
+                {
+                    wasInBalancing = false;
+                }
 
                 if (IsWhiteSpace(ch) || stopChars.Contains(ch))
                 {
@@ -92,6 +98,7 @@ namespace CodeParser
             var stringStartedWith = '\0';
             var balanceCheckArray = new int[BalanceableCharacters.Length];
             var whitespacesPassed = false;
+            var wasInBalancing = false;
 
             for (int i = 0; i < balanceCheckArray.Length; i++)
             {
@@ -103,30 +110,32 @@ namespace CodeParser
                 var ch = code[i];
                 temp += ch;
 
-                if (!isInsideSring && stopChars.Contains(ch))
+                if (!isInsideSring && stopChars.Contains(ch) && !wasInBalancing)
                 {
                     res.RawPhrase = temp[..^1];
-                    temp = $"{ch}";
-                    for (int j = i + 1; j < code.Length; j++)
-                    {
-                        var c = code[j];
-                        if (IsWhiteSpace(c))
-                            temp += c;
-                        else
-                            break;
-                    }
-                    res.WhiteSpaceAfter = temp;
+                    res.RawPhrase = new string(res.RawPhrase.ToCharArray().Reverse().ToArray());
+                    res.Start = startPos - res.RawPhrase.Length;
+                    //Remove first spaces and get spaces after code to Whitespace after \t\r\n[a]\r\n
+                    res.WhiteSpaceAfter = "";
                     return res;
                 }
 
                 if (StringCheck(code, ref isInsideSring, ref stringStartedWith, i, ch) ||
-                    !BalancedChars(ch, balanceCheckArray))
+                    !BalancedChars(ch, balanceCheckArray, ref wasInBalancing))
                     continue;
+
+                if (wasInBalancing)
+                {
+                    temp = new string(temp[..^1].ToCharArray().Reverse().ToArray());
+                    res.RawPhrase = temp.TrimEnd();
+                    res.WhiteSpaceAfter = temp[res.RawPhrase.Length..];
+                    res.Start = startPos - res.RawPhrase.Length - res.WhiteSpaceAfter.Length;
+                    return res;
+                }
 
                 if (stopChars.Contains(ch) || (IsWhiteSpace(ch) && whitespacesPassed))
                 {
                     res.RawPhrase = temp[..^1];
-                    temp = $"{ch}";
                     res.RawPhrase = new string(res.RawPhrase.ToCharArray().Reverse().ToArray());
                     res.Start = startPos - res.RawPhrase.Length - res.WhiteSpaceAfter.Length;
                     return res;
@@ -145,11 +154,14 @@ namespace CodeParser
 
         private bool IsWhiteSpace(char ch) => WhiteSpaces.Contains(ch);
 
-        private bool BalancedChars(char ch, int[] balanceCheckArray)
+        private bool BalancedChars(char ch, int[] balanceCheckArray,ref bool wasInBalancing)
         {
             var index = BalanceableCharacters.IndexOf(ch);
-            if(index != -1)
+            if (index != -1)
+            {
                 balanceCheckArray[index]++;
+                wasInBalancing = true;
+            }
             else if (AllBalanced(balanceCheckArray))
                 return true;
             return false;

@@ -1,13 +1,17 @@
 ﻿namespace CodeParser.Enums
 {
+    //https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/accessibility-levels
     public enum AccessModifierType
     {
-        Default,//https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/accessibility-levels
         Public,
         Internal,
         Protected,
         ProtectedInternal,
         Private,
-        PrivateProtected
+        PrivateProtected,
+        ClassDefault = Private,
+        EnumDefault = Public,
+        InterfaceDefault = Public,
+        StructDefault = Private
     }
 }

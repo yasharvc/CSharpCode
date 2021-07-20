@@ -2,5 +2,6 @@
 {
     public class AttributeBlock
     {
+        public string RawText { get; set; }
     }
 }
