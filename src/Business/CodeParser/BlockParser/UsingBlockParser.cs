@@ -22,11 +22,11 @@ namespace CodeParser.BlockParser
                 while(pos >= 0)
                     pos = ParseNextUsing(code, list, pos);
 
-                return Task.FromResult(new ParseResult<UsingBlock> { Blocks = list, FinishPosition = list.Last().Text.End, SartPosition = startPos });
+                return Task.FromResult(new ParseResult<UsingBlock> { Blocks = list, FinishPosition = list.Last().Text.End, StartPosition = startPos });
             }
             catch (FormatException)
             {
-                return Task.FromResult(new ParseResult<UsingBlock> { Blocks = list, FinishPosition = pos, SartPosition = startPos });
+                return Task.FromResult(new ParseResult<UsingBlock> { Blocks = list, FinishPosition = pos, StartPosition = startPos });
             }
         }
 

@@ -80,5 +80,29 @@ namespace UnitTests.CodeParserTests
 
             secondWord.RawPhrase.ShouldBe("System");
         }
+
+        [Fact]
+        public void Should_Get_Pervious_Word()
+        {
+            var code = "ab class cls";
+            var parser = new ParseWithWordSplit();
+
+            var res = parser.PreviousWord(code, code.IndexOf("class") - 1);
+
+        }
+
+        [Fact]
+        public void Should_Get_Pervious_Word_With()
+        {
+            var code = 
+@"class cls
+{
+    Task<ff> func()
+}";
+            var parser = new ParseWithWordSplit();
+
+            var res = parser.PreviousWord(code, code.IndexOf("func") - 1,stopChars:"{};()");
+
+        }
     }
 }

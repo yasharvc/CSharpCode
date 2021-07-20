@@ -3,3 +3,5 @@
 3. To have just one and one type inside namespace (class/struct/enum...) [optional but good practice]
 4. Don't use namespace without block (C# 10)!!!
 5. One file / One namespace please
+6. No support for records for now!
+7. Code should have no error (Should compilable)

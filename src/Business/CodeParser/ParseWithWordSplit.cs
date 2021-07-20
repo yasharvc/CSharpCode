@@ -1,4 +1,6 @@
 ﻿using CodeParser.Models;
+using System;
+using System.Linq;
 
 namespace CodeParser
 {
@@ -75,6 +77,69 @@ namespace CodeParser
                 }
             }
             res.RawPhrase = temp;
+            return res;
+        }
+        public TextWithPosition PreviousWord(string code, int startPos = 0, string whtiteSpaces = WhiteSpaces, string stopChars = "")
+        {
+            startPos = startPos <= 0 ? code.Length : startPos > code.Length ? code.Length : startPos;
+
+            var res = new TextWithPosition
+            {
+            };
+
+            var temp = "";
+            var isInsideSring = false;
+            var stringStartedWith = '\0';
+            var balanceCheckArray = new int[BalanceableCharacters.Length];
+            var whitespacesPassed = false;
+
+            for (int i = 0; i < balanceCheckArray.Length; i++)
+            {
+                balanceCheckArray[i] = 0;
+            }
+
+            for (int i = startPos - 1; i >= 0; i--)
+            {
+                var ch = code[i];
+                temp += ch;
+
+                if (!isInsideSring && stopChars.Contains(ch))
+                {
+                    res.RawPhrase = temp[..^1];
+                    temp = $"{ch}";
+                    for (int j = i + 1; j < code.Length; j++)
+                    {
+                        var c = code[j];
+                        if (IsWhiteSpace(c))
+                            temp += c;
+                        else
+                            break;
+                    }
+                    res.WhiteSpaceAfter = temp;
+                    return res;
+                }
+
+                if (StringCheck(code, ref isInsideSring, ref stringStartedWith, i, ch) ||
+                    !BalancedChars(ch, balanceCheckArray))
+                    continue;
+
+                if (stopChars.Contains(ch) || (IsWhiteSpace(ch) && whitespacesPassed))
+                {
+                    res.RawPhrase = temp[..^1];
+                    temp = $"{ch}";
+                    res.RawPhrase = new string(res.RawPhrase.ToCharArray().Reverse().ToArray());
+                    res.Start = startPos - res.RawPhrase.Length - res.WhiteSpaceAfter.Length;
+                    return res;
+                }
+
+                if (!IsWhiteSpace(ch) && !whitespacesPassed)
+                {
+                    res.WhiteSpaceAfter = temp[..^1];
+                    temp = temp[1..];
+                    whitespacesPassed = true;
+                }
+            }
+            res.RawPhrase = new string(temp.ToCharArray().Reverse().ToArray());
             return res;
         }
 
