@@ -65,6 +65,7 @@ namespace CodeParser.BlockParser
                     else
                         return starttPos;
                     text = parseWithWordSplit.NextWord(code, ParseWithWordSplit.SkipSpaces(code, endPos), stopChars: "{");
+                    endPos = text.End;
                 }
             }
             else
@@ -85,7 +86,7 @@ namespace CodeParser.BlockParser
             var genericName = parseWithWordSplit.NextWord(code, endPos, stopChars: ":");
             whereConstraint.GenericTypeName = genericName;
             endPos = ParseWithWordSplit.SkipSpaces(code, genericName.End, extraChars: ":");
-            var allConstraint = parseWithWordSplit.NextWordWithStopWords(code, "{", endPos, "{", "{}");
+            var allConstraint = parseWithWordSplit.NextWordWithStopWords(code, "{", endPos, "where", "{", "{}");
             endPos = allConstraint.End;
 
             whereConstraint.Constraints = GetAllConstraintOfWhere(allConstraint);

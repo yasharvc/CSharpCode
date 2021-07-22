@@ -248,5 +248,37 @@ namespace UnitTests.BlockParserTests
             whereClause.Constraints.ShouldContain("new()");
             whereClause.Constraints.ShouldContain("abc<T,string>");
         }
+        [Fact]
+        public async void Should_Extract_Type_Constarin_For_GenericType_With_GenericTypes_in_constraint()
+        {
+            var code =
+@"namespace name
+{
+    class cls<T,U> where T: class,new(),abc<T,string> where U: struct{}
+}";
+            var parser = new ClassBlockParser();
+
+            var res = await parser.Parse(code);
+
+            res.Blocks.Count().ShouldBe(1);
+            res.Blocks.First().AccessModifier.ShouldBe(AccessModifierType.ClassDefault);
+            res.Blocks.First().Name.ShouldBe("cls");
+            res.Blocks.First().GenericTypes.Count.ShouldBe(2);
+            res.Blocks.First().GenericTypes.First().ShouldBe("T");
+            res.Blocks.First().GenericTypes.Last().ShouldBe("U");
+            res.Blocks.First().WhereClauses.Count.ShouldBe(2);
+
+            var whereClause = res.Blocks.First().WhereClauses.First();
+            whereClause.GenericTypeName.ShouldBe("T");
+            whereClause.RawText.RawPhrase.ShouldBe("where T: class,new(),abc<T,string>");
+            whereClause.Constraints.ShouldContain("class");
+            whereClause.Constraints.ShouldContain("new()");
+            whereClause.Constraints.ShouldContain("abc<T,string>");
+
+            whereClause = res.Blocks.First().WhereClauses.ElementAt(1);
+            whereClause.GenericTypeName.ShouldBe("U");
+            whereClause.RawText.RawPhrase.ShouldBe("where U: struct");
+            whereClause.Constraints.ShouldContain("struct");
+        }
     }
 }
