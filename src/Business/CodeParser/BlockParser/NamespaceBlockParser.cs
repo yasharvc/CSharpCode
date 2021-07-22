@@ -30,7 +30,7 @@ namespace CodeParser.BlockParser
             pos += "namespace".Length;
             GetName(code, res, pos);
             await GetBody(code, res);
-            await GetClasses(res);
+            await GetClasses(code, res);
 
             return new ParseResult<NamespaceBlock>
             {
@@ -40,14 +40,12 @@ namespace CodeParser.BlockParser
             };
         }
 
-        private async Task<int> GetClasses(NamespaceBlock block)
+        private async Task<int> GetClasses(string code, NamespaceBlock block)
         {
-            var code = block.Body.RawPhrase;
-
             if (!code.Contains("class", StringComparison.CurrentCulture))
                 return 0;
 
-            var res = await classParser.Parse(block.Body);
+            var res = await classParser.Parse(code, block.Body.Start);
 
             block.Classes.AddRange(res.Blocks);
 

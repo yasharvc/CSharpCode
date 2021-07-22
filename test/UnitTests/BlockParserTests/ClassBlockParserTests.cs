@@ -10,11 +10,12 @@ using Xunit;
 
 namespace UnitTests.BlockParserTests
 {
-    abstract partial class dd{
-
-    }
     public class ClassBlockParserTests
     {
+        class Cls<T,U> :FormatException where T:IComparable where U:ICollection<T>
+        {
+
+        }
         [Fact]
         public async void Should_Extract_Abstract_And_Partial()
         {
@@ -107,6 +108,23 @@ namespace UnitTests.BlockParserTests
             res.Blocks.First().Attributes.First().RawText.ShouldBe("[a(123)]");
         }
         [Fact]
+        public async void Should_Extract_Attribute_With_String_Parameter()
+        {
+            var code =
+@"namespace name
+{
+    [a(""ab[(c"",123)] class cls{}
+}";
+            var parser = new ClassBlockParser();
+
+            var res = await parser.Parse(code);
+
+            res.Blocks.Count().ShouldBe(1);
+            res.Blocks.First().AccessModifier.ShouldBe(AccessModifierType.ClassDefault);
+            res.Blocks.First().Attributes.Count.ShouldBe(1);
+            res.Blocks.First().Attributes.First().RawText.ShouldBe("[a(\"ab[(c\",123)]");
+        }
+        [Fact]
         public async void Should_Extract_Attributes()
         {
             var code =
@@ -124,6 +142,85 @@ namespace UnitTests.BlockParserTests
             res.Blocks.First().Attributes.Count.ShouldBe(2);
             res.Blocks.First().Attributes.First().RawText.ShouldBe("[b]");
             res.Blocks.First().Attributes.Last().RawText.ShouldBe("[a]");
+        }
+        [Fact]
+        public async void Should_Extract_Class_Name()
+        {
+            var code =
+@"namespace name
+{
+    class cls{}
+}";
+            var parser = new ClassBlockParser();
+
+            var res = await parser.Parse(code);
+
+            res.Blocks.Count().ShouldBe(1);
+            res.Blocks.First().AccessModifier.ShouldBe(AccessModifierType.ClassDefault);
+            res.Blocks.First().Name.ShouldBe("cls");
+        }
+        [Fact]
+        public async void Should_Extract_Class_Name_With_GenericType()
+        {
+            var code =
+@"namespace name
+{
+    class cls<T>{}
+}";
+            var parser = new ClassBlockParser();
+
+            var res = await parser.Parse(code);
+
+            res.Blocks.Count().ShouldBe(1);
+            res.Blocks.First().AccessModifier.ShouldBe(AccessModifierType.ClassDefault);
+            res.Blocks.First().Name.ShouldBe("cls");
+            res.Blocks.First().GenericTypes.Count.ShouldBe(1);
+            res.Blocks.First().GenericTypes.First().ShouldBe("T");
+        }
+        [Fact]
+        public async void Should_Extract_Class_Name_With_GenericTypes()
+        {
+            var code =
+@"namespace name
+{
+    class cls<T,U,R>{}
+}";
+            var parser = new ClassBlockParser();
+
+            var res = await parser.Parse(code);
+
+            res.Blocks.Count().ShouldBe(1);
+            res.Blocks.First().AccessModifier.ShouldBe(AccessModifierType.ClassDefault);
+            res.Blocks.First().Name.ShouldBe("cls");
+            res.Blocks.First().RawName.ShouldBe("cls<T,U,R>");
+            res.Blocks.First().GenericTypes.Count.ShouldBe(3);
+            res.Blocks.First().GenericTypes.First().ShouldBe("T");
+            res.Blocks.First().GenericTypes.ElementAt(1).ShouldBe("U");
+            res.Blocks.First().GenericTypes.Last().ShouldBe("R");
+        }
+        [Fact]
+        public async void Should_Extract_Type_Constarin_For_GenericType()
+        {
+            var code =
+@"namespace name
+{
+    internal class cls<T> where T: class,new(){}
+}";
+            var parser = new ClassBlockParser();
+
+            var res = await parser.Parse(code);
+
+            res.Blocks.Count().ShouldBe(1);
+            res.Blocks.First().AccessModifier.ShouldBe(AccessModifierType.Internal);
+            res.Blocks.First().Name.ShouldBe("cls");
+            res.Blocks.First().GenericTypes.Count.ShouldBe(1);
+            res.Blocks.First().GenericTypes.First().ShouldBe("T");
+            res.Blocks.First().WhereClauses.Count.ShouldBe(1);
+            var whereClause = res.Blocks.First().WhereClauses.First();
+            whereClause.GenericTypeName.ShouldBe("T");
+            whereClause.RawText.RawPhrase.ShouldBe("where T: class,new()");
+            whereClause.Constraints.ShouldContain("class");
+            whereClause.Constraints.ShouldContain("new()");
         }
     }
 }

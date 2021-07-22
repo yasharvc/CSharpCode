@@ -12,7 +12,8 @@ namespace CodeParser.Models.Blocks
         public bool IsSealed { get; set; }
         public bool IsPartial { get; set; }
         public string Name { get; set; }
-        public string WhereClause { get; set; }
+        public string RawName { get; set; }
+        public List<ConstraintWhereBlock> WhereClauses { get; set; }
         public InheritedClass InheritedClass { get; set; }
         public List<InheritedInterface> InheritedInterfaces { get; set; }
         public List<string> GenericTypes { get; set; } //class FX<T,R>...

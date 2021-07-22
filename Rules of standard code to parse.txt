@@ -5,3 +5,4 @@
 5. One file / One namespace please
 6. No support for records for now!
 7. Code should have no error (Should compilable)
+8. Do use I in start of interface and use upercase letter in second letter of interface => ISomeInterface

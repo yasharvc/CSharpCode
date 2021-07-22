@@ -16,6 +16,53 @@ namespace CodeParser
         public const string BalanceableCharacters = "{}()[]";
         public const string ParameterSeparator = ",";
 
+        public static int SkipSpaces(string code, int startPos = 0, string whiteSpaces = WhiteSpaces, string extraChars = "")
+        {
+            whiteSpaces += extraChars;
+            while (whiteSpaces.Contains(code[startPos]) && startPos < code.Length)
+                startPos++;
+            return startPos;
+        }
+
+        public TextWithPosition NextWordWithStopWords(string code, string nextWordStopChars = "", int startPos = 0, params string[] stopWords)
+        {
+            if (stopWords.Length == 0)
+                throw new ArgumentOutOfRangeException(nameof(stopWords));
+
+            var pos = startPos;
+            TextWithPosition word = new();
+            do
+            {
+                pos = SkipSpaces(code, pos);
+                var spaceAfter = word.WhiteSpaceAfter;
+                word = NextWord(code, pos, stopChars: nextWordStopChars);
+                if (stopWords.Contains(word.RawPhrase))
+                    return new TextWithPosition {
+                        Start = startPos,
+                        RawPhrase = code[startPos..(pos - spaceAfter.Length)],
+                        WhiteSpaceAfter = spaceAfter
+                    };
+                else if (stopWords.Contains(word.WhiteSpaceAfter.Trim()))
+                {
+                    var res = new TextWithPosition
+                    {
+                        Start = startPos,
+                        RawPhrase = code[startPos..(word.End - word.WhiteSpaceAfter.Length)]
+                    };
+                    var pp = SkipSpaces(code, word.EndWithoutWhitespace);
+                    res.WhiteSpaceAfter = code[word.EndWithoutWhitespace..pp];
+                    return res;
+                }
+                pos = word.End;
+            } while (!word.IsEmptyOrWhiteSpace);
+
+            return new TextWithPosition
+            {
+                Start = startPos,
+                RawPhrase = code[startPos..]
+            };
+        }
+
         public TextWithPosition NextWord(string code, int startPos = 0, string whtiteSpaces = WhiteSpaces, string stopChars = "")
         {
             startPos = startPos < 0 ? 0 : startPos > code.Length ? code.Length : startPos;
@@ -41,7 +88,7 @@ namespace CodeParser
                 var ch = code[i];
                 temp += ch;
 
-                if(!isInsideSring && stopChars.Contains(ch) && !wasInBalancing)
+                if (!isInsideSring && stopChars.Contains(ch) && (!wasInBalancing || AllBalanced(balanceCheckArray)))
                 {
                     res.RawPhrase = temp[..^1];
                     temp = $"{ch}";
