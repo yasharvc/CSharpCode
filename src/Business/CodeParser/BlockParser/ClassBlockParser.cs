@@ -56,33 +56,15 @@ namespace CodeParser.BlockParser
                 GetNameWithGenericTypes(classBlock, name);
                 var text = parseWithWordSplit.NextWord(code, endPos, stopChars: "{");
                 endPos = text.End;
-                if (!text.IsEmptyOrWhiteSpace)
+                while (!text.IsEmptyOrWhiteSpace)
                 {
                     if (text.RawPhrase.StartsWith("where"))
-                    {
-                        var whereConstraint = new ConstraintWhereBlock();
-                        endPos = ParseWithWordSplit.SkipSpaces(code, endPos);
-                        var genericName = parseWithWordSplit.NextWord(code, endPos, stopChars: ":");
-                        whereConstraint.GenericTypeName = genericName;
-                        endPos = ParseWithWordSplit.SkipSpaces(code, genericName.End, extraChars: ":");
-                        var allConstraint = parseWithWordSplit.NextWordWithStopWords(code, "{", endPos, "{", "{}");
-                        endPos = allConstraint.End;
-
-                        whereConstraint.Constraints = GetAllConstraintOfWhere(allConstraint);
-                        whereConstraint.RawText = new TextWithPosition
-                        {
-                            RawPhrase = code[text.Start..allConstraint.EndWithoutWhitespace],
-                            Start = text.Start,
-                            WhiteSpaceAfter = allConstraint.WhiteSpaceAfter
-                        };
-                        //Direct where after class name
-
-                        classBlock.WhereClauses.Add(whereConstraint);
-                    }
+                        endPos = ExtractWhereConstraint(code, classBlock, endPos, text);
                     else if (text.RawPhrase.StartsWith(":"))
                         ;//Inherited classes and interfaces
                     else
-                        throw new NotImplementedException();
+                        return starttPos;
+                    text = parseWithWordSplit.NextWord(code, ParseWithWordSplit.SkipSpaces(code, endPos), stopChars: "{");
                 }
             }
             else
@@ -94,6 +76,29 @@ namespace CodeParser.BlockParser
 
 
             return 0;
+        }
+
+        private int ExtractWhereConstraint(string code, ClassBlock classBlock, int endPos, TextWithPosition text)
+        {
+            var whereConstraint = new ConstraintWhereBlock();
+            endPos = ParseWithWordSplit.SkipSpaces(code, endPos);
+            var genericName = parseWithWordSplit.NextWord(code, endPos, stopChars: ":");
+            whereConstraint.GenericTypeName = genericName;
+            endPos = ParseWithWordSplit.SkipSpaces(code, genericName.End, extraChars: ":");
+            var allConstraint = parseWithWordSplit.NextWordWithStopWords(code, "{", endPos, "{", "{}");
+            endPos = allConstraint.End;
+
+            whereConstraint.Constraints = GetAllConstraintOfWhere(allConstraint);
+            whereConstraint.RawText = new TextWithPosition
+            {
+                RawPhrase = code[text.Start..allConstraint.EndWithoutWhitespace],
+                Start = text.Start,
+                WhiteSpaceAfter = allConstraint.WhiteSpaceAfter
+            };
+            //Direct where after class name
+
+            classBlock.WhereClauses.Add(whereConstraint);
+            return endPos;
         }
 
         private List<string> GetAllConstraintOfWhere(TextWithPosition allConstraint)
@@ -114,7 +119,6 @@ namespace CodeParser.BlockParser
 
         private static void GetNameWithGenericTypes(ClassBlock classBlock, TextWithPosition name)
         {
-            classBlock.RawName += ">";
             var temp = name.RawPhrase;
             classBlock.Name = temp[..temp.IndexOf("<")];
             temp = temp[temp.IndexOf("<")..].Replace(">", "").Replace("<", "");

@@ -222,5 +222,31 @@ namespace UnitTests.BlockParserTests
             whereClause.Constraints.ShouldContain("class");
             whereClause.Constraints.ShouldContain("new()");
         }
+        [Fact]
+        public async void Should_Extract_Type_Constarin_For_GenericType_With_Complex_GenericType_in_constraint()
+        {
+            var code =
+@"namespace name
+{
+    internal class cls<T> where T: class,new(),abc<T,string>{}
+}";
+            var parser = new ClassBlockParser();
+
+            var res = await parser.Parse(code);
+
+            res.Blocks.Count().ShouldBe(1);
+            res.Blocks.First().AccessModifier.ShouldBe(AccessModifierType.Internal);
+            res.Blocks.First().Name.ShouldBe("cls");
+            res.Blocks.First().GenericTypes.Count.ShouldBe(1);
+            res.Blocks.First().GenericTypes.First().ShouldBe("T");
+            res.Blocks.First().WhereClauses.Count.ShouldBe(1);
+
+            var whereClause = res.Blocks.First().WhereClauses.First();
+            whereClause.GenericTypeName.ShouldBe("T");
+            whereClause.RawText.RawPhrase.ShouldBe("where T: class,new(),abc<T,string>");
+            whereClause.Constraints.ShouldContain("class");
+            whereClause.Constraints.ShouldContain("new()");
+            whereClause.Constraints.ShouldContain("abc<T,string>");
+        }
     }
 }

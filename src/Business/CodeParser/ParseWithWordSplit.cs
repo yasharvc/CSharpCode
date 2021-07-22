@@ -13,7 +13,7 @@ namespace CodeParser
         public const string BlockStartIndicator = "{";
         public const string BlockEndIndicator = "}";
         public const string EndOfCodeIndicator = ";";
-        public const string BalanceableCharacters = "{}()[]";
+        public const string BalanceableCharacters = "{}()[]<>";
         public const string ParameterSeparator = ",";
 
         public static int SkipSpaces(string code, int startPos = 0, string whiteSpaces = WhiteSpaces, string extraChars = "")
