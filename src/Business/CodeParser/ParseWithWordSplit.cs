@@ -54,7 +54,7 @@ namespace CodeParser
                     return res;
                 }
                 pos = word.End;
-            } while (!word.IsEmptyOrWhiteSpace);
+            } while (!word.IsEmptyOrWhiteSpace && pos < code.Length);
 
             return new TextWithPosition
             {

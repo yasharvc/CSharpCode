@@ -22,8 +22,9 @@ namespace CodeParser.BlockParser
             {
                 AccessModifier = AccessModifierType.ClassDefault,
                 Attributes = new List<AttributeBlock>(),
-                WhereClauses = new List<ConstraintWhereBlock>()
-        };
+                WhereClauses = new List<ConstraintWhereBlock>(),
+                InheritedInterfaces = new List<InheritedInterface>()
+            };
             var classPos = code.IndexOf("class");
             var finishPos = startPos;
 
@@ -42,8 +43,10 @@ namespace CodeParser.BlockParser
 
         private int ExtractAfterClass(string code, ClassBlock classBlock, int starttPos)
         {
-            var endPos = starttPos;
-            while (char.IsWhiteSpace(code[endPos])) endPos++;
+            var endPos = ParseWithWordSplit.SkipSpaces(code, starttPos);
+
+            classBlock.InheritedClass = new InheritedClass { GenericTypes = new List<string>(), ClassName = "" };
+            classBlock.InheritedInterfaces = new List<InheritedInterface>();
 
             classBlock.GenericTypes = new List<string>();
 
@@ -59,9 +62,9 @@ namespace CodeParser.BlockParser
                 while (!text.IsEmptyOrWhiteSpace)
                 {
                     if (text.RawPhrase.StartsWith("where"))
-                        endPos = ExtractWhereConstraint(code, classBlock, endPos, text);
+                        endPos = ExtractWhereConstraint(code, classBlock, endPos, text.Start);
                     else if (text.RawPhrase.StartsWith(":"))
-                        ;//Inherited classes and interfaces
+                        endPos = ExtractInheritedClasses(code, classBlock,endPos, text.Start);
                     else
                         return starttPos;
                     text = parseWithWordSplit.NextWord(code, ParseWithWordSplit.SkipSpaces(code, endPos), stopChars: "{");
@@ -71,15 +74,73 @@ namespace CodeParser.BlockParser
             else
             {
                 classBlock.Name = name;
+                var text = parseWithWordSplit.NextWord(code, endPos, stopChars: "{");
+                endPos = text.End;
+                if (text.RawPhrase.StartsWith(":"))
+                    endPos = ExtractInheritedClasses(code, classBlock, endPos, text.Start);
             }
 
-
-
-
-            return 0;
+            return endPos;
         }
 
-        private int ExtractWhereConstraint(string code, ClassBlock classBlock, int endPos, TextWithPosition text)
+        private int ExtractInheritedClasses(string code, ClassBlock classBlock, int endPos, int start)
+        {
+            endPos = ParseWithWordSplit.SkipSpaces(code, endPos);
+            var allInheritens = parseWithWordSplit.NextWordWithStopWords(code, "{", endPos, "where", "{", "{}");
+
+            var text = parseWithWordSplit.NextWordWithStopWords(allInheritens, ",", 0, "{", "{}", "where", ",");
+
+            while (!text.IsEmptyOrWhiteSpace)
+            {
+                if (text.RawPhrase.StartsWith("I") && char.IsUpper(text.RawPhrase[1]))
+                    classBlock.InheritedInterfaces.Add(GetInterfaceInfo(text.RawPhrase));
+                else
+                    classBlock.InheritedClass = GetClassInfo(text.RawPhrase);
+                if (text.End >= allInheritens.RawPhrase.Length)
+                    break;
+                text = parseWithWordSplit.NextWordWithStopWords(allInheritens, ",", ParseWithWordSplit.SkipSpaces(allInheritens, text.End, extraChars: ","), "{", "{}", "where", ",");
+            }
+            return allInheritens.End;
+        }
+
+        private InheritedInterface GetInterfaceInfo(string rawPhrase)
+        {
+            var pos = 0;
+            var text = parseWithWordSplit.NextWordWithStopWords(rawPhrase, nextWordStopChars: "<{,", pos, ",", "{","<");
+            pos = text.End;
+
+            var interfaceInfo = new InheritedInterface
+            {
+                InterfaceName = text.RawPhrase,
+                GenericTypes = new List<string>()
+            };
+
+            if (rawPhrase.Contains("<"))
+            {
+                var generics = parseWithWordSplit.NextWordWithStopWords(rawPhrase, ",", pos, ",",">").RawPhrase[1..^1];
+                text = parseWithWordSplit.NextWordWithStopWords(generics, ",", 0, ",", ">");
+                while (!text.IsEmptyOrWhiteSpace)
+                {
+                    interfaceInfo.GenericTypes.Add(text);
+                    if (text.End >= generics.Length)
+                        break;
+                    text = parseWithWordSplit.NextWordWithStopWords(generics, ",", ParseWithWordSplit.SkipSpaces(generics, text.End, extraChars: ","), ",", ">");
+                }
+            }
+            return interfaceInfo;
+        }
+
+        private InheritedClass GetClassInfo(string rawPhrase)
+        {
+            var res = GetInterfaceInfo(rawPhrase);
+            return new InheritedClass
+            {
+                ClassName = res.InterfaceName,
+                GenericTypes = res.GenericTypes
+            };
+        }
+
+        private int ExtractWhereConstraint(string code, ClassBlock classBlock, int endPos, int startPos)
         {
             var whereConstraint = new ConstraintWhereBlock();
             endPos = ParseWithWordSplit.SkipSpaces(code, endPos);
@@ -92,8 +153,8 @@ namespace CodeParser.BlockParser
             whereConstraint.Constraints = GetAllConstraintOfWhere(allConstraint);
             whereConstraint.RawText = new TextWithPosition
             {
-                RawPhrase = code[text.Start..allConstraint.EndWithoutWhitespace],
-                Start = text.Start,
+                RawPhrase = code[startPos..allConstraint.EndWithoutWhitespace],
+                Start = startPos,
                 WhiteSpaceAfter = allConstraint.WhiteSpaceAfter
             };
             //Direct where after class name

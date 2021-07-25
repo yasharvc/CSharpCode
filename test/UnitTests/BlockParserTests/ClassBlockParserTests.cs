@@ -280,5 +280,62 @@ namespace UnitTests.BlockParserTests
             whereClause.RawText.RawPhrase.ShouldBe("where U: struct");
             whereClause.Constraints.ShouldContain("struct");
         }
+        [Fact]
+        public async void Should_Extract_Class_Inheritance()
+        {
+            var code =
+@"namespace name
+{
+    class cls : BaseClass,IIface,IDict<string, int>{}
+}";
+            var parser = new ClassBlockParser();
+
+            var res = await parser.Parse(code);
+
+            res.Blocks.Count().ShouldBe(1);
+            res.Blocks.First().AccessModifier.ShouldBe(AccessModifierType.ClassDefault);
+            res.Blocks.First().Name.ShouldBe("cls");
+            res.Blocks.First().RawName.ShouldBe("cls");
+            res.Blocks.First().GenericTypes.Count.ShouldBe(0);
+            res.Blocks.First().InheritedClass.ClassName.ShouldBe("BaseClass");
+            res.Blocks.First().InheritedClass.GenericTypes.Count.ShouldBe(0);
+
+            var x = res.Blocks.First().InheritedInterfaces;
+
+            x.Count.ShouldBe(2);
+            x.First().InterfaceName.ShouldBe("IIface");
+            x.Last().InterfaceName.ShouldBe("IDict");
+            x.Last().GenericTypes.First().ShouldBe("string");
+            x.Last().GenericTypes.Last().ShouldBe("int");
+        }
+        [Fact]
+        public async void Should_Extract_Class_Inheritance_GenericBaseClass()
+        {
+            var code =
+@"namespace name
+{
+    class cls : BaseClass<X>,IIface,IDict<string, int>{}
+}";
+            var parser = new ClassBlockParser();
+
+            var res = await parser.Parse(code);
+
+            res.Blocks.Count().ShouldBe(1);
+            res.Blocks.First().AccessModifier.ShouldBe(AccessModifierType.ClassDefault);
+            res.Blocks.First().Name.ShouldBe("cls");
+            res.Blocks.First().RawName.ShouldBe("cls");
+            res.Blocks.First().GenericTypes.Count.ShouldBe(0);
+            res.Blocks.First().InheritedClass.ClassName.ShouldBe("BaseClass");
+            res.Blocks.First().InheritedClass.GenericTypes.Count.ShouldBe(1);
+            res.Blocks.First().InheritedClass.GenericTypes.First().ShouldBe("X");
+
+            var x = res.Blocks.First().InheritedInterfaces;
+
+            x.Count.ShouldBe(2);
+            x.First().InterfaceName.ShouldBe("IIface");
+            x.Last().InterfaceName.ShouldBe("IDict");
+            x.Last().GenericTypes.First().ShouldBe("string");
+            x.Last().GenericTypes.Last().ShouldBe("int");
+        }
     }
 }
