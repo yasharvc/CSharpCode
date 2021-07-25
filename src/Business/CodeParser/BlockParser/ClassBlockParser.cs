@@ -68,7 +68,8 @@ namespace CodeParser.BlockParser
                     else
                         return starttPos;
                     text = parseWithWordSplit.NextWord(code, ParseWithWordSplit.SkipSpaces(code, endPos), stopChars: "{");
-                    endPos = text.End;
+                    if(!text.IsEmptyOrWhiteSpace)
+                        endPos = text.End;
                 }
             }
             else
