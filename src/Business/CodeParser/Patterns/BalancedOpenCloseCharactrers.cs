@@ -9,12 +9,12 @@ namespace CodeParser.Patterns
         public char OpenChar { get; set; }
         public char CloseChar { get; set; }
 
-        public async Task<Tuple<List<string>, int>> Compile(string code) => await BalancedOpenClose(code);
+        public async Task<Tuple<List<string>, int>> Compile(string code,int startPos = 0) => await BalancedOpenClose(code, startPos);
 
-        private Task<Tuple<List<string>, int>> BalancedOpenClose(string code)
+        private Task<Tuple<List<string>, int>> BalancedOpenClose(string code, int startPos)
         {
             var res = new List<string>();
-            var pos = code.IndexOf(OpenChar);
+            var pos = code.IndexOf(OpenChar, startPos);
             if (pos >= 0)
             {
                 var c = code.Substring(pos, GetBalancedEndIndex(code[pos..]));

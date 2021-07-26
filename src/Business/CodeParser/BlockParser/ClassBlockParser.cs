@@ -32,6 +32,7 @@ namespace CodeParser.BlockParser
             startPos = ExtractBeforeClass(code, startPos, classBlock, classPos);
 
             finishPos = ExtractAfterClass(code, classBlock, classPos + 5);
+            await ParseClassBody(code, finishPos);
 
             return new ParseResult<ClassBlock>
             {
@@ -39,6 +40,105 @@ namespace CodeParser.BlockParser
                 FinishPosition = finishPos,
                 StartPosition = startPos
             };
+        }
+
+        private async Task ParseClassBody(string code, int startPos)
+        {
+            var accessModifiers = new List<string>
+            {
+                "public",
+                "protected",
+                "private",
+                "internal"
+            };
+            //var body = (await balancedOpenCloseCharactrers.Compile(code, finishPos)).Item1.First();
+            //var body = code[ParseWithWordSplit.SkipSpaces(code, startPos, extraChars: "{")..].Trim();
+            var accessModifier = AccessModifierType.None;
+            var isStatic = false;
+            var isVirtual = false;
+            var isAsync = false;
+            var isOverride = false;
+            var isAbstract = false;
+            var isNew = false;
+            var isSealed = false;
+
+            var items = new List<string>();
+            var parameters = new List<string>();
+
+            var pos = ParseWithWordSplit.SkipSpaces(code, startPos);
+            var text = parseWithWordSplit.NextWord(code, pos);
+
+            var wordindexInDeclartion = 1;
+
+            while (!text.IsEmptyOrWhiteSpace)
+            {
+                if (accessModifiers.Contains(text.RawPhrase))
+                {
+                    accessModifier = ExtractAccessModifier(text, accessModifier);
+                    wordindexInDeclartion = 1;
+                }
+                else if (wordindexInDeclartion == 1)
+                {
+                    if (text.RawPhrase.Equals("static"))
+                        isStatic = true;
+                    else if (text.RawPhrase.Equals("virtual"))
+                        isVirtual = true;
+                    else if (text.RawPhrase.Equals("async"))
+                        isAsync = true;
+                    else if (text.RawPhrase.Equals("abstract"))
+                        isAbstract = true;
+                    else if (text.RawPhrase.Equals("override"))
+                        isOverride = true;
+                    else if (text.RawPhrase.Equals("new"))
+                        isNew = true;
+                    else if (text.RawPhrase.Equals("sealed"))
+                        isSealed = true;
+                    else
+                    {
+                        wordindexInDeclartion = 2;
+                        continue;
+                    }
+                }
+                else if(wordindexInDeclartion == 2)
+                {
+                    items.Add(text);
+                    text = parseWithWordSplit.NextWord(code, ParseWithWordSplit.SkipSpaces(code, text.End), stopChars: "({=");
+                    if (text.WhiteSpaceAfter == "(")
+                    {
+                        wordindexInDeclartion = 3;
+                        text = parseWithWordSplit.NextWordWithStopWords(code, ",", text.End, ")",",");
+                        continue;
+                    }
+                    else if(text.WhiteSpaceAfter == "{")
+                    {
+                        wordindexInDeclartion = 4;
+                        continue;
+                    }
+                    else if(text.WhiteSpaceAfter == "=")
+                    {
+                        wordindexInDeclartion = 5;
+                        continue;
+                    }
+                }
+                else if(wordindexInDeclartion == 3)//Function of constructor
+                {
+                    while (!text.IsEmptyOrWhiteSpace && text.WhiteSpaceAfter != ")")
+                    {
+                        parameters.Add(text);
+
+                        text = parseWithWordSplit.NextWordWithStopWords(code, ",)", ParseWithWordSplit.SkipSpaces(code, text.End, extraChars: ","), ",", ")");
+                    }
+                }
+                else if(wordindexInDeclartion == 4)//Property
+                {
+
+                }
+                else if (wordindexInDeclartion == 5)//Property with =>
+                {
+
+                }
+                text = parseWithWordSplit.NextWordWithStopWords(code , "(", text.End , wordindexInDeclartion > 1 ? "(" : "");
+            }
         }
 
         private int ExtractAfterClass(string code, ClassBlock classBlock, int starttPos)
@@ -201,7 +301,7 @@ namespace CodeParser.BlockParser
                     break;
 
                 ExtractClassType(classBlock, wordBefore);
-                ExtractAccessModifier(classBlock, wordBefore);
+                classBlock.AccessModifier = ExtractAccessModifier(wordBefore, classBlock.AccessModifier);
                 ExtractAttribute(classBlock, wordBefore);
 
                 startPos = wordBefore.Start;
@@ -217,16 +317,17 @@ namespace CodeParser.BlockParser
                 classBlock.Attributes.Add(new AttributeBlock { RawText = wordBefore.RawPhrase });
         }
 
-        private static void ExtractAccessModifier(ClassBlock classBlock, TextWithPosition currentWord)
+        private static AccessModifierType ExtractAccessModifier(TextWithPosition currentWord, AccessModifierType current = AccessModifierType.None)
         {
             if (currentWord.RawPhrase == "public")
-                classBlock.AccessModifier = AccessModifierType.Public;
+                return AccessModifierType.Public;
             else if (currentWord.RawPhrase == "internal")
-                classBlock.AccessModifier = AccessModifierType.Internal;
+                return current == AccessModifierType.Protected ? AccessModifierType.ProtectedInternal : AccessModifierType.Internal;
             else if (currentWord.RawPhrase == "protected")
-                classBlock.AccessModifier = classBlock.AccessModifier == AccessModifierType.Internal ? AccessModifierType.ProtectedInternal : AccessModifierType.Protected;
+                return current == AccessModifierType.Internal ? AccessModifierType.ProtectedInternal : AccessModifierType.Protected;
             else if (currentWord.RawPhrase == "private")
-                classBlock.AccessModifier = classBlock.AccessModifier == AccessModifierType.Protected ? AccessModifierType.PrivateProtected : AccessModifierType.Private;
+                return current == AccessModifierType.Protected ? AccessModifierType.PrivateProtected : AccessModifierType.Private;
+            return current;
         }
 
         private static void ExtractClassType(ClassBlock classBlock, TextWithPosition currentWord)

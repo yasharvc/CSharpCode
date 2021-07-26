@@ -3,6 +3,7 @@
     //https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/accessibility-levels
     public enum AccessModifierType
     {
+        None,
         Public,
         Internal,
         Protected,
