@@ -350,6 +350,7 @@ namespace UnitTests.BlockParserTests
             var res = await parser.Parse(code);
 
             res.Blocks.Count().ShouldBe(1);
+            
             res.Blocks.First().AccessModifier.ShouldBe(AccessModifierType.Internal);
             res.Blocks.First().Name.ShouldBe("cls");
             res.Blocks.First().GenericTypes.Count.ShouldBe(1);

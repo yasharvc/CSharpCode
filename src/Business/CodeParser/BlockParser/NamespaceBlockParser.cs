@@ -17,7 +17,8 @@ namespace CodeParser.BlockParser
         {
             var res = new NamespaceBlock
             {
-                Usings = new List<UsingBlock>()
+                Usings = new List<UsingBlock>(),
+                Classes = new List<ClassBlock>()
             };
 
             var pos = startPos;
@@ -28,14 +29,15 @@ namespace CodeParser.BlockParser
                 return ParseResult<NamespaceBlock>.Empty(startPos);
 
             pos += "namespace".Length;
-            GetName(code, res, pos);
-            await GetBody(code, res);
-            await GetClasses(code, res);
+            pos = ParseWithWordSplit.SkipSpaces(code, pos);
+            pos = GetName(code, res, pos);
+            pos = await GetBody(code, res, pos);
+            pos = await GetClasses(code, res);
 
             return new ParseResult<NamespaceBlock>
             {
                 Blocks = new List<NamespaceBlock> { res },
-                FinishPosition = res.Body.End,
+                FinishPosition = code.Length,
                 StartPosition = startPos
             };
         }
@@ -52,24 +54,26 @@ namespace CodeParser.BlockParser
             return res.FinishPosition;
         }
 
-        private async Task GetBody(string code, NamespaceBlock res)
+        private async Task<int> GetBody(string code, NamespaceBlock res, int pos)
         {
             
             var blocks = await balancedOpenCloseCharactrers.Compile(code);
             res.Body = new TextWithPosition
             {
                 RawPhrase = blocks.Item1.First(),
-                Start = blocks.Item2,
-                WhiteSpaceAfter = code[blocks.Item1.First().Length..]
+                Start = pos,
+                WhiteSpaceAfter = ""
             };
+            return res.Body.End;
         }
 
-        private void GetName(string code, NamespaceBlock res, int pos)
+        private int GetName(string code, NamespaceBlock res, int pos)
         {
             var name = parseWithWordSplit.NextWord(code, pos, stopChars: "{");
             while (name.IsEmpty)
                 name = parseWithWordSplit.NextWord(code, name.End, stopChars: "{");
             res.Name = name;
+            return name.End;
         }
 
         private static async Task<int> GetUsings(string code, NamespaceBlock res, int pos)
