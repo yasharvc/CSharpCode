@@ -62,12 +62,50 @@ namespace UnitTests.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to using System;
+        ///using System.Threading.Tasks;
+        ///using dt = System.DateTime;
+        ///using static System.Console;
+        ///
+        ///
+        ///namespace UnitTests.RegExTests
+        ///{
+        ///    using Xunit;
+        ///    public class PCRETests
+        ///    {
+        ///        protected internal int myi = 0;
+        ///        public PCRETests(int i)
+        ///        {
+        ///            myi = i;
+        ///        }
+        ///
+        ///        [Fact]
+        ///        public void Should_Parse_Using()
+        ///        {
+        ///
+        ///        }
+        ///
+        ///        public string MyStr { get; set; }
+        ///    }
+        ///}
+        ///.
+        /// </summary>
+        internal static string fullcode {
+            get {
+                return ResourceManager.GetString("fullcode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to using System;
         ///using dt = System.DateTime;
         ///
         ///namespace yashar
         ///{
         ///	public class fx
         ///	{
+        ///		internal fx(){
+        ///			Age = 150;
+        ///		}
         ///		public int Age{get;set;}
         ///
         ///		void fx(){
@@ -83,7 +121,7 @@ namespace UnitTests.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to function fx(a,c).
+        ///   Looks up a localized string similar to function fx(int a, string c).
         /// </summary>
         internal static string UntilOr {
             get {

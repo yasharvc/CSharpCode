@@ -1,0 +1,27 @@
+using System;
+using System.Threading.Tasks;
+using dt = System.DateTime;
+using static System.Console;
+//This is a sample con
+
+namespace UnitTests.RegExTests
+{
+    using Xunit;
+    public class PCRETests
+    {
+        protected internal int myi = 0;
+        public PCRETests(int i)
+        {
+            myi = i;
+            var x = "using system.datetims; is a string not a using!!";
+        }
+
+        [Fact]
+        public void Should_Parse_Using()
+        {
+
+        }
+
+        public string MyStr { get; set; }
+    }
+}
